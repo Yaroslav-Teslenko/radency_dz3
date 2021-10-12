@@ -19,7 +19,8 @@
   "homepage": "https://github.com/Yaroslav-Teslenko/radency_dz3#readme",
   "dependencies": {
     "dotenv": "^10.0.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "yup": "^0.32.10"
   },
   "devDependencies": {
     "nodemon": "^2.0.13"
