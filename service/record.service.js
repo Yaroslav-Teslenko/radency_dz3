@@ -1,75 +1,101 @@
 //const RecordModel = require("../models/Record.model");
-let records = [
-  {
-    id: 1,
-    name: "name1",
-    created: "2021-10-07T17:55:40.371Z",
-    category: "Task",
-    content: " Lorem ipsum 10/07/2021 10/08/2021 10/09/2021 adipisicing elit. 12/25/2021",
-    active: true,
-  },
-  { id: 2, name: "name2", created: "2021-10-07T17:55:40.371Z", category: "Task", content: " Lorem ipsum dolor sit amet consectetur adipisicing elit.  ", active: false },
-  { id: 3, name: "name3", created: "2021-10-07T17:55:40.371Z", category: "Idea", content: " Lorem 25/07/2021	.  ", active: false },
-  { id: 4, name: "name4", created: "2021-10-07T17:55:40.371Z", category: "Idea", content: " Lorem ipsum dolor sit amet consectetur adipisicing elit.  ", active: true },
-  { id: 5, name: "name5", created: "2021-10-07T17:55:40.371Z", category: "Idea", content: " Lorem ipsum dolor sit amet consectetur adipisicing elit.  ", active: false },
-].reduce((acc, record, idx) => {
-  acc[record.id] = { ...record, idx };
-  return acc;
-}, {});
+const ApiError = require("../middlewares/api.error");
+let records = require("../repositories/data");
+let categories = require("../repositories/category");
 
-let categories = [{ category: "Task" }, { category: "Random Thought" }, { category: "Idea" }];
+let yup = require("yup");
+
+let schema = yup.object().shape({
+  name: yup.string().required(),
+  category: yup.string().required(),
+  content: yup.string().required(),
+  active: yup.boolean().default(true),
+  created: yup.date().default(function () {
+    return new Date();
+  }),
+});
 
 class RecordService {
-  createRecord(payload) {
-    let id = `rec-${Math.random()}`;
-    records[id] = { ...payload, id, active: true, created: new Date() };
-    const responce = records[id];
-
-    return responce;
-  }
-
-  setAcitiveToggle(id) {
-    records[id].active = !records[id].active;
-    const responce = records[id];
-    return responce;
-  }
-
-  editRecord(id, payload) {
-    records[id].name = payload.name;
-    records[id].category = payload.category;
-    records[id].content = payload.content;
-
-    const responce = records[id];
-    return responce;
-  }
-
-  deleteRecord(id) {
-    delete records[id];
-    const responce = { id };
-    return responce;
-  }
-  getRecord(id) {
-    const responce = records[id];
-    return responce;
-  }
-  getRecords() {
-    const responce = records;
-    return responce;
-  }
-  getSummaryCat() {
-    let tmp = categories.reduce((acc, record, idx) => {
-      acc[record.category] = { ...record, all: 0, arh: 0 };
-      return acc;
-    }, {});
-    for (const key in records) {
-      const element = records[key];
-      tmp[element.category].all++;
-      if (!element.active) {
-        tmp[element.category].arh++;
-      }
+  async createRecord(payload) {
+    try {
+      await schema.validate(payload, {
+        abortEarly: false,
+      });
+      let id = `rec-${Math.random()}`;
+      records[id] = { ...payload, id, active: true, created: new Date() };
+      const responce = records[id];
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: err };
     }
-    //console.log(tmp);
-    return tmp;
+  }
+
+  async editRecord(id, payload) {
+    try {
+      await schema.validate(payload, {
+        abortEarly: false,
+      });
+      records[id].name = payload.name;
+      records[id].category = payload.category;
+      records[id].content = payload.content;
+      const responce = records[id];
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  }
+
+  async setAcitiveToggle(id) {
+    try {
+      records[id].active = !records[id].active;
+      const responce = records[id];
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: { message: err.message, errors: err.errors } };
+    }
+  }
+  async deleteRecord(id) {
+    try {
+      delete records[id];
+      const responce = `Record ${id} deleted`;
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  }
+  async getRecord(id) {
+    try {
+      const responce = records[id];
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  }
+  async getRecords() {
+    try {
+      const responce = records;
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  }
+  async getSummaryCat() {
+    try {
+      const responce = categories.reduce((acc, record, idx) => {
+        acc[record.category] = { ...record, all: 0, arh: 0 };
+        return acc;
+      }, {});
+      for (const key in records) {
+        const element = records[key];
+        responce[element.category].all++;
+        if (!element.active) {
+          responce[element.category].arh++;
+        }
+      }
+      return { success: true, body: responce };
+    } catch (err) {
+      return { success: false, error: err };
+    }
   }
 }
 
