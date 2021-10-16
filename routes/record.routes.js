@@ -3,7 +3,7 @@ const router = new Router();
 const RecordController = require("../contollers/record.controller");
 
 router.get("/records", RecordController.getRecords);
-router.get("/record/stats", RecordController.getSummaryCat);
+router.get("/records/stats", RecordController.getSummaryCat);
 
 router.post("/record", RecordController.createRecord);
 router.get("/record/:id", RecordController.getRecord);

@@ -12,5 +12,3 @@ module.exports = class ApiError extends Error {
     return new ApiError(400, message, errors);
   }
 };
-
-// static функции которые можно использовать не создавая экземпляр класса
