@@ -1,8 +1,4 @@
-//const RecordModel = require("../models/Record.model");
-const ApiError = require("../middlewares/api.error");
-let records = require("../repositories/data");
-let categories = require("../repositories/category");
-
+const RecordReposit = require("../repositories/data.reposit");
 let yup = require("yup");
 
 let schema = yup.object().shape({
@@ -21,9 +17,10 @@ class RecordService {
       await schema.validate(payload, {
         abortEarly: false,
       });
-      let id = `rec-${Math.random()}`;
-      records[id] = { ...payload, id, active: true, created: new Date() };
-      const responce = records[id];
+      let newRec = { ...payload, id: `rec-${Math.random()}`, active: true, created: new Date() };
+
+      const responce = (await RecordReposit.createRecord(newRec)).body;
+
       return { success: true, body: responce };
     } catch (err) {
       return { success: false, error: err };
@@ -35,10 +32,7 @@ class RecordService {
       await schema.validate(payload, {
         abortEarly: false,
       });
-      records[id].name = payload.name;
-      records[id].category = payload.category;
-      records[id].content = payload.content;
-      const responce = records[id];
+      const responce = (await RecordReposit.editRecord(id, payload)).body;
       return { success: true, body: responce };
     } catch (err) {
       return { success: false, error: err };
@@ -47,8 +41,8 @@ class RecordService {
 
   async setAcitiveToggle(id) {
     try {
-      records[id].active = !records[id].active;
-      const responce = records[id];
+      const responce = (await RecordReposit.setAcitiveToggle(id)).body;
+
       return { success: true, body: responce };
     } catch (err) {
       return { success: false, error: { message: err.message, errors: err.errors } };
@@ -56,8 +50,7 @@ class RecordService {
   }
   async deleteRecord(id) {
     try {
-      delete records[id];
-      const responce = `Record ${id} deleted`;
+      const responce = (await RecordReposit.deleteRecord(id)).body;
       return { success: true, body: responce };
     } catch (err) {
       return { success: false, error: err };
@@ -65,22 +58,25 @@ class RecordService {
   }
   async getRecord(id) {
     try {
-      const responce = records[id];
-      return { success: true, body: responce };
+      const responce = await RecordReposit.getRecord(id);
+      return { success: true, body: responce.body };
     } catch (err) {
       return { success: false, error: err };
     }
   }
   async getRecords() {
     try {
-      const responce = records;
-      return { success: true, body: responce };
+      const responce = await RecordReposit.getRecords();
+      return { success: true, body: responce.body };
     } catch (err) {
       return { success: false, error: err };
     }
   }
   async getSummaryCat() {
     try {
+      const categories = (await RecordReposit.getCategory()).body;
+      const records = (await RecordReposit.getRecords()).body;
+
       const responce = categories.reduce((acc, record, idx) => {
         acc[record.category] = { ...record, all: 0, arh: 0 };
         return acc;
